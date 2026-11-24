@@ -4,75 +4,309 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Quiz de Jornalismo</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
   :root {
-    --bg: #f6f2f8; --card: #ffffff; --text: #2a2233; --muted: #6b6177;
-    --accent: #7a2d6e; --accent2: #b5135f; --ok: #1f7a4d; --ok-bg: #e3f4ea;
-    --bad: #b3261e; --bad-bg: #fbe5e3; --hint-bg: #fff6d9; --border: #e2d9e8;
+    --bg: #f7f3ee; --paper: #fffdf9; --ink: #221a26; --muted: #6f6475; --line: #e7dfe4;
+    --plum: #6b2361; --magenta: #c2185b; --soft: #f3e6ef;
+    --ok: #1d7348; --ok-bg: #e2f3e9; --bad: #b3261e; --bad-bg: #fbe6e4; --hint-bg: #fff4d1; --hint-ink: #6b5200;
+    --shadow: 0 1px 2px rgba(60,20,60,.06), 0 8px 24px rgba(60,20,60,.07);
   }
   @media (prefers-color-scheme: dark) {
     :root {
-      --bg: #1b1620; --card: #26202d; --text: #f0eaf4; --muted: #a99db5;
-      --accent: #d68ac8; --accent2: #ff6fa8; --ok: #6fd59f; --ok-bg: #1d3a2b;
-      --bad: #ff8a80; --bad-bg: #432421; --hint-bg: #3a3320; --border: #3a3142;
+      --bg: #16121a; --paper: #211b26; --ink: #f2ecf4; --muted: #ab9fb3; --line: #362d3d;
+      --plum: #e39bd6; --magenta: #ff79ac; --soft: #33243a;
+      --ok: #7ad9a5; --ok-bg: #173527; --bad: #ff9a90; --bad-bg: #42211f; --hint-bg: #3a3218; --hint-ink: #f4dc8c;
+      --shadow: 0 1px 2px rgba(0,0,0,.3), 0 8px 24px rgba(0,0,0,.25);
     }
   }
   * { box-sizing: border-box; }
-  body { margin: 0; background: var(--bg); color: var(--text);
-    font: 17px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
-  main { max-width: 680px; margin: 0 auto; padding: 24px 16px 48px; }
-  h1 { font-size: 1.6rem; margin: 0 0 4px; color: var(--accent); }
-  .sub { color: var(--muted); margin: 0 0 20px; }
-  .card { background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 20px; }
-  .top { display: flex; justify-content: space-between; gap: 8px; color: var(--muted); font-size: .9rem; margin-bottom: 8px; }
-  .tag { background: var(--bg); border-radius: 99px; padding: 2px 10px; }
-  .bar { height: 6px; background: var(--border); border-radius: 99px; overflow: hidden; margin-bottom: 18px; }
-  .bar > div { height: 100%; background: linear-gradient(90deg, var(--accent), var(--accent2)); transition: width .3s; }
-  h2 { font-size: 1.15rem; margin: 0 0 16px; }
+  html { scroll-behavior: smooth; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font: 16px/1.6 Inter, system-ui, sans-serif; }
+  main { max-width: 760px; margin: 0 auto; padding: 0 16px 64px; }
+  h1, h2, h3, .serif { font-family: Fraunces, Georgia, serif; }
+
+  /* cabeçalho estilo jornal */
+  header { text-align: center; padding: 32px 0 16px; }
+  .kicker { font-size: .75rem; letter-spacing: .18em; text-transform: uppercase; color: var(--magenta); font-weight: 600; }
+  header h1 { font-size: clamp(2rem, 7vw, 3rem); font-weight: 800; line-height: 1.05; margin: 6px 0 10px; letter-spacing: -.01em; }
+  .rule { border: 0; border-top: 3px double var(--ink); opacity: .7; margin: 0; }
+  .dateline { display: flex; justify-content: space-between; font-size: .8rem; color: var(--muted); padding: 6px 2px; border-bottom: 1px solid var(--line); }
+
+  /* abas */
+  .tabs { display: flex; gap: 6px; background: var(--paper); border: 1px solid var(--line); border-radius: 999px; padding: 5px; margin: 20px auto 24px; max-width: 360px; box-shadow: var(--shadow); }
+  .tab { flex: 1; font: 600 .95rem Inter, sans-serif; border: 0; background: transparent; color: var(--muted); border-radius: 999px; padding: 10px 12px; cursor: pointer; transition: .2s; }
+  .tab[aria-selected="true"] { background: linear-gradient(135deg, var(--plum), var(--magenta)); color: #fff; }
+  .tab:focus-visible, .btn:focus-visible, .opt:focus-visible, .chip:focus-visible { outline: 3px solid var(--magenta); outline-offset: 2px; }
+
+  .card { background: var(--paper); border: 1px solid var(--line); border-radius: 18px; padding: 24px; box-shadow: var(--shadow); }
+  .hidden { display: none !important; }
+
+  /* quiz */
+  .meta { display: flex; justify-content: space-between; align-items: center; gap: 8px; font-size: .85rem; color: var(--muted); }
+  .pill { background: var(--soft); color: var(--plum); border-radius: 999px; padding: 3px 12px; font-weight: 600; font-size: .8rem; }
+  .bar { height: 8px; background: var(--line); border-radius: 999px; overflow: hidden; margin: 12px 0 22px; }
+  .bar > div { height: 100%; width: 0; background: linear-gradient(90deg, var(--plum), var(--magenta)); border-radius: 999px; transition: width .4s ease; }
+  #question { font-size: 1.35rem; line-height: 1.3; margin: 0 0 18px; font-weight: 600; }
   .opts { display: grid; gap: 10px; }
-  .opt { text-align: left; font: inherit; color: var(--text); background: var(--card);
-    border: 2px solid var(--border); border-radius: 10px; padding: 12px 14px; cursor: pointer; }
-  .opt:hover:not(:disabled) { border-color: var(--accent); }
+  .opt { display: flex; align-items: center; gap: 12px; text-align: left; font: inherit; color: var(--ink); background: var(--paper);
+    border: 2px solid var(--line); border-radius: 14px; padding: 12px 14px; cursor: pointer; transition: border-color .15s, transform .15s, background .15s; }
+  .opt:hover:not(:disabled) { border-color: var(--plum); transform: translateY(-1px); }
   .opt:disabled { cursor: default; }
-  .opt.ok { border-color: var(--ok); background: var(--ok-bg); }
-  .opt.bad { border-color: var(--bad); background: var(--bad-bg); }
-  .row { display: flex; gap: 10px; margin-top: 16px; flex-wrap: wrap; }
-  .btn { font: inherit; border: 0; border-radius: 10px; padding: 10px 18px; cursor: pointer; }
-  .btn.primary { background: var(--accent); color: #fff; }
-  .btn.ghost { background: transparent; color: var(--accent); border: 2px solid var(--accent); }
-  .btn:disabled { opacity: .45; cursor: default; }
-  .hint, .exp { margin-top: 14px; padding: 12px 14px; border-radius: 10px; }
-  .hint { background: var(--hint-bg); }
+  .letter { flex: none; width: 30px; height: 30px; display: grid; place-items: center; border-radius: 50%; background: var(--soft); color: var(--plum); font-weight: 700; font-size: .85rem; }
+  .opt.ok { border-color: var(--ok); background: var(--ok-bg); } .opt.ok .letter { background: var(--ok); color: #fff; }
+  .opt.bad { border-color: var(--bad); background: var(--bad-bg); animation: shake .35s; } .opt.bad .letter { background: var(--bad); color: #fff; }
+  @keyframes shake { 25% { transform: translateX(-4px); } 75% { transform: translateX(4px); } }
+  .box { margin-top: 16px; padding: 14px 16px; border-radius: 14px; animation: fade .25s; }
+  @keyframes fade { from { opacity: 0; transform: translateY(4px); } }
+  .hint { background: var(--hint-bg); color: var(--hint-ink); }
   .exp.ok { background: var(--ok-bg); } .exp.bad { background: var(--bad-bg); }
-  .big { font-size: 2.6rem; font-weight: 700; color: var(--accent); margin: 8px 0; }
-  .hidden { display: none; }
+  .exp a { color: var(--plum); font-weight: 600; }
+  .row { display: flex; gap: 10px; margin-top: 18px; flex-wrap: wrap; justify-content: space-between; }
+  .btn { font: 600 .95rem Inter, sans-serif; border-radius: 12px; padding: 11px 20px; cursor: pointer; border: 2px solid transparent; }
+  .btn.primary { background: linear-gradient(135deg, var(--plum), var(--magenta)); color: #fff; }
+  .btn.ghost { background: transparent; color: var(--plum); border-color: var(--plum); }
+  .btn:disabled { opacity: .4; cursor: default; }
+
+  /* resultado */
+  #result { text-align: center; }
+  .ring { --p: 0; width: 160px; height: 160px; margin: 12px auto; border-radius: 50%; display: grid; place-items: center;
+    background: conic-gradient(var(--magenta) calc(var(--p) * 1%), var(--line) 0); }
+  .ring > div { width: 128px; height: 128px; border-radius: 50%; background: var(--paper); display: grid; place-items: center; }
+  .ring b { font-family: Fraunces, serif; font-size: 2.2rem; color: var(--plum); line-height: 1; }
+  .ring small { color: var(--muted); }
+  .weak { text-align: left; margin: 18px 0; padding: 0; list-style: none; display: grid; gap: 8px; }
+  .weak li { display: flex; justify-content: space-between; gap: 8px; background: var(--soft); border-radius: 12px; padding: 10px 14px; }
+  .weak a { color: var(--plum); font-weight: 600; }
+
+  /* revisão */
+  .chips { position: sticky; top: 0; z-index: 2; display: flex; gap: 8px; overflow-x: auto; padding: 10px 0; background: var(--bg); scrollbar-width: none; }
+  .chip { flex: none; font: 600 .8rem Inter, sans-serif; color: var(--plum); background: var(--paper); border: 1px solid var(--line); border-radius: 999px; padding: 6px 12px; text-decoration: none; }
+  .chip:hover { border-color: var(--plum); }
+  .sec { margin-top: 18px; scroll-margin-top: 60px; }
+  .sec h2 { font-size: 1.6rem; margin: 0 0 4px; }
+  .sec .lede { color: var(--muted); margin: 0 0 16px; }
+  .sec h3 { font-size: 1.1rem; margin: 22px 0 8px; color: var(--plum); }
+  .sec ul { padding-left: 20px; margin: 8px 0; } .sec li { margin: 4px 0; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 12px; }
+  .mini { border: 1px solid var(--line); border-radius: 14px; padding: 14px; background: var(--bg); }
+  .mini h4 { margin: 0 0 4px; font-size: 1rem; }
+  .mini p { margin: 0; font-size: .92rem; }
+  .mini .ex { margin-top: 8px; font-size: .85rem; color: var(--muted); }
+  .quote { border-left: 4px solid var(--magenta); padding: 6px 14px; margin: 12px 0; font-family: Fraunces, serif; font-size: 1.05rem; }
+  .quote cite { display: block; font: .8rem Inter, sans-serif; color: var(--muted); margin-top: 4px; font-style: normal; }
+  .tip { background: var(--soft); border-radius: 12px; padding: 12px 14px; margin: 12px 0; font-size: .95rem; }
+  table { width: 100%; border-collapse: collapse; font-size: .9rem; }
+  th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  th { color: var(--plum); }
+  .scroll { overflow-x: auto; }
+  .go { margin-top: 18px; text-align: right; }
+  footer { text-align: center; color: var(--muted); font-size: .8rem; margin-top: 32px; }
 </style>
 </head>
 <body>
 <main>
-  <h1>Quiz de Jornalismo 📰</h1>
-  <p class="sub">Fontes, entrevista, gêneros, intertítulo, olho, aspas, pipoca, curta e legenda. Travou? Clique em <b>💡 Dica</b>.</p>
+  <header>
+    <div class="kicker">Edição de estudo · Unidades II e III</div>
+    <h1>Quiz de Jornalismo</h1>
+    <hr class="rule">
+    <div class="dateline"><span>Fontes · Entrevista · Gêneros · Edição</span><span>46 perguntas</span></div>
+  </header>
 
-  <section class="card" id="quiz">
-    <div class="top"><span id="count"></span><span class="tag" id="topic"></span></div>
-    <div class="bar"><div id="progress"></div></div>
-    <h2 id="question"></h2>
-    <div class="opts" id="options"></div>
-    <div class="hint hidden" id="hint"></div>
-    <div class="exp hidden" id="exp"></div>
-    <div class="row">
-      <button class="btn ghost" id="hintBtn">💡 Dica</button>
-      <button class="btn primary hidden" id="nextBtn">Próxima →</button>
-    </div>
-  </section>
+  <nav class="tabs" role="tablist">
+    <button class="tab" role="tab" id="tab-quiz" aria-selected="true" data-view="quiz">📝 Quiz</button>
+    <button class="tab" role="tab" id="tab-rev" aria-selected="false" data-view="revisao">📚 Revisão</button>
+  </nav>
 
-  <section class="card hidden" id="result" style="text-align:center">
-    <h2>Resultado</h2>
-    <div class="big" id="score"></div>
-    <p id="msg"></p>
-    <p class="sub" id="hintsUsed"></p>
-    <button class="btn primary" id="restart">Jogar de novo</button>
-  </section>
+  <!-- ================= QUIZ ================= -->
+  <div id="view-quiz">
+    <section class="card" id="quiz">
+      <div class="meta"><span id="count"></span><span class="pill" id="topic"></span></div>
+      <div class="bar"><div id="progress"></div></div>
+      <h2 id="question"></h2>
+      <div class="opts" id="options"></div>
+      <div class="box hint hidden" id="hint"></div>
+      <div class="box exp hidden" id="exp"></div>
+      <div class="row">
+        <button class="btn ghost" id="hintBtn">💡 Dica</button>
+        <button class="btn primary hidden" id="nextBtn">Próxima →</button>
+      </div>
+    </section>
+
+    <section class="card hidden" id="result">
+      <h2 class="serif">Resultado</h2>
+      <div class="ring" id="ring"><div><span><b id="score"></b><br><small id="pct"></small></span></div></div>
+      <p id="msg"></p>
+      <p style="color:var(--muted)" id="hintsUsed"></p>
+      <ul class="weak" id="weak"></ul>
+      <button class="btn primary" id="restart">Jogar de novo</button>
+    </section>
+  </div>
+
+  <!-- ================= REVISÃO ================= -->
+  <div id="view-revisao" class="hidden">
+    <nav class="chips">
+      <a class="chip" href="#r-fontes">Fontes</a>
+      <a class="chip" href="#r-tipos">Tipos de fonte</a>
+      <a class="chip" href="#r-lei">Sigilo e lei</a>
+      <a class="chip" href="#r-entrevista">Entrevista</a>
+      <a class="chip" href="#r-generos">Gêneros</a>
+      <a class="chip" href="#r-inter">Intertítulo e olho</a>
+      <a class="chip" href="#r-declara">Declaratório</a>
+      <a class="chip" href="#r-outros">Pipoca e curta</a>
+      <a class="chip" href="#r-legenda">Legenda e TL</a>
+    </nav>
+
+    <section class="card sec" id="r-fontes">
+      <div class="kicker">Unidade II</div>
+      <h2>Fontes de informação</h2>
+      <p class="lede">São o alicerce de qualquer notícia: a origem dos dados, fatos, opiniões e depoimentos que o jornalista usa para construir a narrativa.</p>
+      <h3>Por que a fonte importa</h3>
+      <ul>
+        <li>Dá <b>credibilidade</b> à notícia e mostra que o jornalista foi atrás da informação.</li>
+        <li>Traz <b>pluralidade</b> de ideias e versões.</li>
+        <li>Permite <b>mais profundidade</b> no assunto.</li>
+        <li>Princípio da apuração: <b>checar com pelo menos três fontes</b>.</li>
+      </ul>
+      <div class="grid">
+        <div class="mini"><h4>✅ Pontos positivos</h4><p>Credibilidade e veracidade · Pluralidade de perspectivas · Contextualização (especialistas e documentos) · Revelação de fatos ocultos (oficiosas e anônimas).</p></div>
+        <div class="mini"><h4>⚠️ Pontos de atenção</h4><p>Dependência e manipulação (assessorias “filtram”) · Viés e subjetividade · Risco de desinformação · Exclusão de vozes de minorias e pessoas comuns.</p></div>
+      </div>
+      <h3>Como apresentar a fonte</h3>
+      <p>Qualificação (cargo) <b>antes</b> do nome. Ex.: <i>O sociólogo Antônio Alves, 62 anos, explicou…</i></p>
+      <div class="tip">🔁 <b>Repetir sempre as mesmas fontes</b> deixa o texto chato e previsível, o jornal “pasteurizado”, espanta o leitor, derruba vendas e credibilidade, e o repórter ganha fama de preguiçoso.</div>
+      <div class="quote">Quem se acomoda nas fontes organizadas e foge dos desprotegidos começa, ele próprio, a “cheirar mal”.<cite>Ideia de Manuel Chaparro, citada na aula</cite></div>
+    </section>
+
+    <section class="card sec" id="r-tipos">
+      <div class="kicker">Nilson Lage</div>
+      <h2>Tipos de fonte</h2>
+      <p class="lede">Classificação usada em aula, com o exemplo de cada uma.</p>
+      <div class="grid">
+        <div class="mini"><h4>Primária</h4><p>Dá o essencial: fatos, versões, números. Relação direta com o assunto. Todo texto precisa de uma. Personagens entram aqui.</p><div class="ex">Ex.: nutricionista fala sobre obesidade.</div></div>
+        <div class="mini"><h4>Secundária</h4><p>Ajuda a preparar a pauta e compor o texto. Menos peso de credibilidade; cruzar e reconfirmar.</p><div class="ex">Ex.: eletricista que informa o repórter, sem aparecer na matéria.</div></div>
+        <div class="mini"><h4>Oficial</h4><p>Mantida pelo Estado, instituições ligadas a ele, empresas ou organizações. Pode falsear a realidade por interesses.</p><div class="ex">Ex.: presidente do Banco do Brasil.</div></div>
+        <div class="mini"><h4>Oficiosa</h4><p>Ligada à entidade, mas <b>não autorizada</b> a falar por ela. Revela manobras escondidas. Preservar a identidade.</p><div class="ex">Ex.: agente administrativo de um órgão.</div></div>
+        <div class="mini"><h4>Independente / especialista</h4><p>Sem relação de poder ou interesse específico. Pode ser primária ou secundária.</p><div class="ex">Ex.: dona de casa sobre o preço do pão; cardiologista; professor.</div></div>
+        <div class="mini"><h4>Testemunhal</h4><p>Presenciou o fato. Cuidado com a emoção. O testemunho <b>imediato</b> é o mais confiável; ouvir 3 e ficar com o mínimo comum.</p><div class="ex">Ex.: testemunhas de acidente de trânsito.</div></div>
+        <div class="mini"><h4>Anônima</h4><p>Pode ser de <b>qualquer</b> tipo, mas não é apresentada ao leitor por risco de punição (morte, violência, perder emprego…).</p><div class="ex">Protegida por lei no Brasil.</div></div>
+        <div class="mini"><h4>Documental</h4><p>Pesquisas, documentos, registros e materiais.</p><div class="ex">Ex.: relatórios do governo, processos, balanços, artigos científicos, vídeos, áudios, fotos.</div></div>
+      </div>
+    </section>
+
+    <section class="card sec" id="r-lei">
+      <h2>Sigilo da fonte</h2>
+      <p class="lede">O que a lei e o código de ética garantem.</p>
+      <div class="scroll"><table>
+        <tr><th>Onde</th><th>O que diz</th></tr>
+        <tr><td>Constituição, art. 5º, XIV</td><td>Acesso à informação para todos e sigilo da fonte resguardado quando necessário ao exercício profissional.</td></tr>
+        <tr><td>Art. 7º (citado em aula)</td><td>Não se permite anonimato na manifestação do pensamento, mas é assegurado o sigilo das fontes dos jornalistas.</td></tr>
+        <tr><td>Art. 71 (citado em aula)</td><td>Ninguém pode ser obrigado a revelar o nome do informante, nem punido pelo silêncio.</td></tr>
+        <tr><td>Código de Ética, art. 5º</td><td>É <b>direito</b> do jornalista resguardar o sigilo da fonte.</td></tr>
+        <tr><td>Código de Ética, art. 6º, VI</td><td>É <b>dever</b> do jornalista não colocar em risco a integridade das fontes.</td></tr>
+      </table></div>
+    </section>
+
+    <section class="card sec" id="r-entrevista">
+      <h2>Na hora da entrevista</h2>
+      <p class="lede">Sugestões práticas da aula.</p>
+      <div class="grid">
+        <div class="mini"><h4>Postura</h4><p>Seja pontual e educado. Diga para qual veículo é a entrevista. O repórter conduz: é o dono da matéria.</p></div>
+        <div class="mini"><h4>Perguntas</h4><p>Busque respostas curtas e objetivas. Resposta “sim/não”? Pergunte <b>por quê</b>. Ajuste o nível ao entrevistado e seja coloquial.</p></div>
+        <div class="mini"><h4>Neutralidade</h4><p>Não discuta se ele pensar diferente. Não dê opinião sem ser pedido. Não se empolgue com resposta “bomba”.</p></div>
+        <div class="mini"><h4>Tempo e formato</h4><p>Pingue-pongue: pausa a cada <b>40 min</b>. Factual: cara a cara e com menos de <b>30 min</b>; telefone só sem horário; cuidado com e-mail e redes.</p></div>
+        <div class="mini"><h4>Cuidado e variedade</h4><p>Pergunte antes se pode tocar em temas delicados. Varie as fontes para não cansá-las e variar as informações.</p></div>
+      </div>
+    </section>
+
+    <section class="card sec" id="r-generos">
+      <h2>Gênero informativo</h2>
+      <p class="lede">O gênero é definido pela <b>intencionalidade</b> do jornalista: informar, opinar, interpretar ou entreter.</p>
+      <ul>
+        <li>É a notícia “nua e crua”: fatos de forma objetiva, direta e <b>isenta</b>.</li>
+        <li>Responde a: O quê? Quem? Onde? Quando? Como? Por quê?</li>
+        <li>Texto em <b>3ª pessoa do singular</b>; o repórter não se coloca nem opina.</li>
+        <li>Linguagem clara e formal.</li>
+      </ul>
+      <div class="grid">
+        <div class="mini"><h4>✅ No factual</h4><p>Agilidade e clareza · Isenção · Credibilidade.</p></div>
+        <div class="mini"><h4>❌ No factual</h4><p>Superficialidade · Falta de análise · Fica no “hoje”: validade curta.</p></div>
+      </div>
+      <div class="tip">🎓 O texto do Projeto Integrador para a Revista Tendências mistura o <b>informativo</b> (factual, especiais, pautas frias) com o <b>interpretativo</b> (reportagens).</div>
+    </section>
+
+    <section class="card sec" id="r-inter">
+      <h2>Intertítulo e olho</h2>
+      <p class="lede">Recursos de edição que arejam textos longos.</p>
+      <div class="scroll"><table>
+        <tr><th></th><th>Intertítulo</th><th>Olho</th></tr>
+        <tr><td><b>O que é</b></td><td>Uma ou duas palavras no meio do texto.</td><td>Destaque com os melhores trechos, em letra maior.</td></tr>
+        <tr><td><b>Para quê</b></td><td>Facilitar a leitura e mudar de assunto.</td><td>Chamar a atenção do leitor.</td></tr>
+        <tr><td><b>Ligação</b></td><td>Com o parágrafo <b>abaixo</b> dele, não com o título.</td><td>Frases relevantes do texto, entrevista ou fala.</td></tr>
+        <tr><td><b>Quando/onde</b></td><td>Matérias com 30–35 linhas ou mais; abaixo do 4º ou 5º parágrafo.</td><td>Poucas linhas, centralizadas. Pode cortar palavras para caber.</td></tr>
+        <tr><td><b>Aspas</b></td><td>—</td><td>Fala de alguém: entre aspas e com a fonte. Trecho do texto: sem aspas (depende do manual).</td></tr>
+      </table></div>
+    </section>
+
+    <section class="card sec" id="r-declara">
+      <div class="kicker">Unidade III</div>
+      <h2>Jornalismo declaratório e aspas</h2>
+      <p class="lede">Trocar a apuração dos fatos pela simples reprodução de declarações das fontes.</p>
+      <ul>
+        <li>O jornalista abre mão de apurar, avaliar, confirmar, checar e julgar.</li>
+        <li>Excesso de aspas, falta de apuração e transcrição de entrevista no lugar de matéria afastam o leitor.</li>
+        <li>É cada vez mais comum em veículos sensacionalistas e polêmicos.</li>
+      </ul>
+      <div class="quote">O jornalista não precisa ouvir alguém dizer que a parede é azul para escrever que ela é azul.<cite>Ideia de Bob Fernandes, citada na aula</cite></div>
+      <h3>Como usar aspas</h3>
+      <ul>
+        <li>Ouça, interprete, contextualize e escreva em <b>discurso indireto</b> sem mudar o sentido.</li>
+        <li>Use aspas só quando necessário, para dar credibilidade à fala.</li>
+        <li>Instituição não “diz”: escreva <i>“de acordo com dados divulgados pelo Ministério da Saúde…”</i>.</li>
+        <li>Apresente a profissão da fonte e feche a aspa com o verbo: <i>…”, diz.</i></li>
+      </ul>
+    </section>
+
+    <section class="card sec" id="r-outros">
+      <h2>Pipoca e curta</h2>
+      <p class="lede">Textos menores para fatos com pouco peso ou de última hora.</p>
+      <div class="scroll"><table>
+        <tr><th></th><th>Pipoca</th><th>Curta</th><th>Texto-legenda (TL)</th></tr>
+        <tr><td><b>Tamanho</b></td><td>~5 linhas</td><td>~15 linhas (3 parágrafos)</td><td>4 ou 5 linhas</td></tr>
+        <tr><td><b>Forma</b></td><td>Lead clássico</td><td>Maior que a pipoca, menor que a matéria</td><td>Como um lead, sempre com foto</td></tr>
+        <tr><td><b>Fonte e aspas</b></td><td>Não usa</td><td>Pode usar uma fonte e aspas</td><td>—</td></tr>
+        <tr><td><b>Para quê</b></td><td colspan="3">Registrar o fato, não tomar furo, dar notícia de última hora ou quando a apuração ficou “capenga”. A pipoca é muito usada em colunas; a curta ajuda a fidelizar o leitor.</td></tr>
+      </table></div>
+    </section>
+
+    <section class="card sec" id="r-legenda">
+      <h2>Legenda e texto-legenda</h2>
+      <p class="lede">A foto e a legenda estão entre os primeiros elementos que atraem o leitor.</p>
+      <ul>
+        <li>A legenda <b>não</b> serve só para descrever a foto: esclarece dúvidas e dá contexto.</li>
+        <li>Não subestima o leitor; estilo mais solto e criativo (pode ter aspas).</li>
+        <li>Letra menor que o texto; normalmente em uma linha.</li>
+      </ul>
+      <h3>Funções da legenda</h3>
+      <div class="grid">
+        <div class="mini"><h4>Complementar</h4><p>Traz a parte abstrata que a imagem não tem.</p><div class="ex">Ex.: o local do acidente.</div></div>
+        <div class="mini"><h4>Explicativa</h4><p>Revela o que o leitor não identificaria sozinho.</p><div class="ex">Ex.: a velocidade do carro, pelo amassado.</div></div>
+        <div class="mini"><h4>Evocadora</h4><p>Abre outras reflexões.</p><div class="ex">Ex.: o motorista não dormia há dois dias.</div></div>
+      </div>
+      <h3>Por que o editor pede um TL</h3>
+      <ul>
+        <li>Publicar uma foto importante quando não há matéria para ela.</li>
+        <li>Não tomar furo em fatos de última hora.</li>
+        <li>Justificar a foto na página e economizar espaço.</li>
+        <li>Não deixar o leitor sem a informação, mesmo com apuração fraca.</li>
+      </ul>
+      <div class="go"><button class="btn primary" data-goto="quiz">Bora pro quiz →</button></div>
+    </section>
+  </div>
+
+  <footer>Feito com 💜 para estudar · baseado nas aulas de Fontes, Textos Jornalísticos e Unidade III</footer>
 </main>
 
 <script>
@@ -277,9 +511,28 @@ const Q = [
     e: "O TL justifica a foto na página, evita furo, economiza espaço e garante a informação ao leitor." },
 ];
 
-const $ = id => document.getElementById(id);
-let order, i, score, hints, answered;
+// tema do quiz -> seção da revisão
+const SEC = { "Fontes": "r-fontes", "Entrevista": "r-entrevista", "Gêneros": "r-generos", "Intertítulo e Olho": "r-inter",
+              "Declaratório": "r-declara", "Outros textos": "r-outros", "Legenda e TL": "r-legenda" };
 
+const $ = id => document.getElementById(id);
+let order, i, score, hints, answered, misses;
+
+// ---- abas ----
+function setView(v, anchor) {
+  document.querySelectorAll(".tab").forEach(t => t.setAttribute("aria-selected", t.dataset.view === v));
+  $("view-quiz").classList.toggle("hidden", v !== "quiz");
+  $("view-revisao").classList.toggle("hidden", v !== "revisao");
+  if (anchor) $(anchor).scrollIntoView(); else window.scrollTo(0, 0);
+}
+document.querySelectorAll(".tab").forEach(t => t.onclick = () => setView(t.dataset.view));
+document.querySelector("[data-goto=quiz]").onclick = () => setView("quiz");
+document.addEventListener("click", e => {
+  const a = e.target.closest("[data-sec]");
+  if (a) { e.preventDefault(); setView("revisao", a.dataset.sec); }
+});
+
+// ---- quiz ----
 function shuffle(arr) {
   const a = arr.slice();
   for (let k = a.length - 1; k > 0; k--) { const j = Math.floor(Math.random() * (k + 1)); [a[k], a[j]] = [a[j], a[k]]; }
@@ -287,7 +540,7 @@ function shuffle(arr) {
 }
 
 function start() {
-  order = shuffle(Q); i = 0; score = 0; hints = 0;
+  order = shuffle(Q); i = 0; score = 0; hints = 0; misses = {};
   $("result").classList.add("hidden"); $("quiz").classList.remove("hidden");
   show();
 }
@@ -295,18 +548,20 @@ function start() {
 function show() {
   const item = order[i];
   answered = false;
-  $("count").textContent = `Pergunta ${i + 1} de ${order.length}`;
+  $("count").textContent = `Pergunta ${i + 1} de ${order.length} · ${score} acertos`;
   $("topic").textContent = item.t;
   $("progress").style.width = `${(i / order.length) * 100}%`;
   $("question").textContent = item.q;
   $("hint").classList.add("hidden"); $("hint").textContent = "💡 " + item.h;
-  $("exp").className = "exp hidden";
+  $("exp").className = "box exp hidden";
   $("hintBtn").disabled = false;
   $("nextBtn").classList.add("hidden");
   const box = $("options"); box.innerHTML = "";
-  shuffle(item.o.map((text, idx) => ({ text, ok: idx === item.a }))).forEach(op => {
+  shuffle(item.o.map((text, idx) => ({ text, ok: idx === item.a }))).forEach((op, n) => {
     const b = document.createElement("button");
-    b.className = "opt"; b.textContent = op.text; b.dataset.ok = op.ok;
+    b.className = "opt"; b.dataset.ok = op.ok;
+    b.innerHTML = `<span class="letter">${"ABCD"[n]}</span><span></span>`;
+    b.lastChild.textContent = op.text;
     b.onclick = () => pick(b);
     box.appendChild(b);
   });
@@ -315,16 +570,22 @@ function show() {
 function pick(btn) {
   if (answered) return;
   answered = true;
-  const right = btn.dataset.ok === "true";
-  if (right) score++;
+  const item = order[i], right = btn.dataset.ok === "true";
+  if (right) score++; else misses[item.t] = (misses[item.t] || 0) + 1;
   document.querySelectorAll(".opt").forEach(b => {
     b.disabled = true;
     if (b.dataset.ok === "true") b.classList.add("ok");
   });
   if (!right) btn.classList.add("bad");
   const exp = $("exp");
-  exp.className = "exp " + (right ? "ok" : "bad");
-  exp.textContent = (right ? "✅ Acertou! " : "❌ Quase! ") + order[i].e;
+  exp.className = "box exp " + (right ? "ok" : "bad");
+  exp.textContent = (right ? "✅ Acertou! " : "❌ Quase! ") + item.e + " ";
+  if (!right) {
+    const a = document.createElement("a");
+    a.href = "#"; a.dataset.sec = SEC[item.t]; a.textContent = "Revisar este tema →";
+    exp.appendChild(a);
+  }
+  $("count").textContent = `Pergunta ${i + 1} de ${order.length} · ${score} acertos`;
   $("hintBtn").disabled = true;
   $("nextBtn").textContent = i + 1 < order.length ? "Próxima →" : "Ver resultado";
   $("nextBtn").classList.remove("hidden");
@@ -340,16 +601,25 @@ $("restart").onclick = start;
 function finish() {
   $("quiz").classList.add("hidden"); $("result").classList.remove("hidden");
   const pct = Math.round((score / order.length) * 100);
+  $("ring").style.setProperty("--p", pct);
   $("score").textContent = `${score}/${order.length}`;
+  $("pct").textContent = `${pct}%`;
   $("msg").textContent = pct >= 90 ? "Arrasou! Pode dar aula disso 🏆" :
                          pct >= 70 ? "Muito bem! Está pronta para a prova 💪" :
                          pct >= 50 ? "Bom caminho! Revisa os erros e tenta de novo 📚" :
                                      "Bora revisar o material e jogar de novo 💜";
   $("hintsUsed").textContent = `Dicas usadas: ${hints}`;
+  const weak = $("weak"); weak.innerHTML = "";
+  Object.entries(misses).sort((a, b) => b[1] - a[1]).forEach(([t, n]) => {
+    const li = document.createElement("li");
+    li.innerHTML = `<span></span><a href="#" data-sec="${SEC[t]}">Revisar →</a>`;
+    li.firstChild.textContent = `${t}: ${n} erro${n > 1 ? "s" : ""}`;
+    weak.appendChild(li);
+  });
 }
 
-// autoverificação: toda pergunta tem dica, explicação e resposta válida
-Q.forEach((x, n) => console.assert(x.h && x.e && x.o[x.a], "pergunta inválida", n));
+// autoverificação: toda pergunta tem dica, explicação, resposta válida e seção de revisão
+Q.forEach((x, n) => console.assert(x.h && x.e && x.o[x.a] && $(SEC[x.t]), "pergunta inválida", n));
 start();
 </script>
 </body>
