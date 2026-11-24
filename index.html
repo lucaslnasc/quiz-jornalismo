@@ -1,0 +1,356 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Quiz de Jornalismo</title>
+<style>
+  :root {
+    --bg: #f6f2f8; --card: #ffffff; --text: #2a2233; --muted: #6b6177;
+    --accent: #7a2d6e; --accent2: #b5135f; --ok: #1f7a4d; --ok-bg: #e3f4ea;
+    --bad: #b3261e; --bad-bg: #fbe5e3; --hint-bg: #fff6d9; --border: #e2d9e8;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #1b1620; --card: #26202d; --text: #f0eaf4; --muted: #a99db5;
+      --accent: #d68ac8; --accent2: #ff6fa8; --ok: #6fd59f; --ok-bg: #1d3a2b;
+      --bad: #ff8a80; --bad-bg: #432421; --hint-bg: #3a3320; --border: #3a3142;
+    }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text);
+    font: 17px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+  main { max-width: 680px; margin: 0 auto; padding: 24px 16px 48px; }
+  h1 { font-size: 1.6rem; margin: 0 0 4px; color: var(--accent); }
+  .sub { color: var(--muted); margin: 0 0 20px; }
+  .card { background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 20px; }
+  .top { display: flex; justify-content: space-between; gap: 8px; color: var(--muted); font-size: .9rem; margin-bottom: 8px; }
+  .tag { background: var(--bg); border-radius: 99px; padding: 2px 10px; }
+  .bar { height: 6px; background: var(--border); border-radius: 99px; overflow: hidden; margin-bottom: 18px; }
+  .bar > div { height: 100%; background: linear-gradient(90deg, var(--accent), var(--accent2)); transition: width .3s; }
+  h2 { font-size: 1.15rem; margin: 0 0 16px; }
+  .opts { display: grid; gap: 10px; }
+  .opt { text-align: left; font: inherit; color: var(--text); background: var(--card);
+    border: 2px solid var(--border); border-radius: 10px; padding: 12px 14px; cursor: pointer; }
+  .opt:hover:not(:disabled) { border-color: var(--accent); }
+  .opt:disabled { cursor: default; }
+  .opt.ok { border-color: var(--ok); background: var(--ok-bg); }
+  .opt.bad { border-color: var(--bad); background: var(--bad-bg); }
+  .row { display: flex; gap: 10px; margin-top: 16px; flex-wrap: wrap; }
+  .btn { font: inherit; border: 0; border-radius: 10px; padding: 10px 18px; cursor: pointer; }
+  .btn.primary { background: var(--accent); color: #fff; }
+  .btn.ghost { background: transparent; color: var(--accent); border: 2px solid var(--accent); }
+  .btn:disabled { opacity: .45; cursor: default; }
+  .hint, .exp { margin-top: 14px; padding: 12px 14px; border-radius: 10px; }
+  .hint { background: var(--hint-bg); }
+  .exp.ok { background: var(--ok-bg); } .exp.bad { background: var(--bad-bg); }
+  .big { font-size: 2.6rem; font-weight: 700; color: var(--accent); margin: 8px 0; }
+  .hidden { display: none; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Quiz de Jornalismo 📰</h1>
+  <p class="sub">Fontes, entrevista, gêneros, intertítulo, olho, aspas, pipoca, curta e legenda. Travou? Clique em <b>💡 Dica</b>.</p>
+
+  <section class="card" id="quiz">
+    <div class="top"><span id="count"></span><span class="tag" id="topic"></span></div>
+    <div class="bar"><div id="progress"></div></div>
+    <h2 id="question"></h2>
+    <div class="opts" id="options"></div>
+    <div class="hint hidden" id="hint"></div>
+    <div class="exp hidden" id="exp"></div>
+    <div class="row">
+      <button class="btn ghost" id="hintBtn">💡 Dica</button>
+      <button class="btn primary hidden" id="nextBtn">Próxima →</button>
+    </div>
+  </section>
+
+  <section class="card hidden" id="result" style="text-align:center">
+    <h2>Resultado</h2>
+    <div class="big" id="score"></div>
+    <p id="msg"></p>
+    <p class="sub" id="hintsUsed"></p>
+    <button class="btn primary" id="restart">Jogar de novo</button>
+  </section>
+</main>
+
+<script>
+// a = índice da resposta certa em o (as opções são embaralhadas na tela)
+const Q = [
+  // ---- Fontes de informação ----
+  { t: "Fontes", q: "No jornalismo, o que são as fontes de informação?",
+    o: ["A origem dos dados, fatos, opiniões e depoimentos usados para construir a notícia", "Apenas os documentos oficiais do governo", "O título e o subtítulo da matéria", "Os leitores que comentam a notícia"], a: 0,
+    h: "Pense no 'alicerce' de qualquer notícia: de onde vem tudo que o jornalista escreve?",
+    e: "As fontes são o alicerce da notícia: origem de dados, fatos, opiniões e depoimentos." },
+  { t: "Fontes", q: "Qual é o famoso princípio da apuração citado na aula?",
+    o: ["Checar a informação com pelo menos três fontes", "Ouvir apenas a fonte oficial", "Publicar primeiro e checar depois", "Usar no máximo uma fonte por matéria"], a: 0,
+    h: "É um número pequeno, ímpar, e aparece também nas fontes testemunhais.",
+    e: "Checar com pelo menos três fontes garante que os fatos sejam confirmados." },
+  { t: "Fontes", q: "Segundo Nilson Lage, qual é a fonte em que o jornalista se baseia para colher o essencial da matéria (fatos, versões, números)?",
+    o: ["Fonte primária", "Fonte secundária", "Fonte oficiosa", "Fonte anônima"], a: 0,
+    h: "É a 'primeira' em importância. Todo texto tem que ter uma.",
+    e: "Fonte primária: fornece o essencial, tem relação direta com o assunto. Ex.: nutricionista falando sobre obesidade." },
+  { t: "Fontes", q: "Os personagens de uma matéria (quem sofre a ação prática do assunto) se encaixam em qual tipo de fonte?",
+    o: ["Primária", "Secundária", "Documental", "Oficial"], a: 0,
+    h: "Eles têm relação direta com o assunto da matéria.",
+    e: "Os personagens estão na categoria de fonte primária." },
+  { t: "Fontes", q: "Um eletricista que passa informações ao jornalista para preparar a pauta, mas não aparece com o nome na matéria, é que tipo de fonte?",
+    o: ["Secundária", "Primária", "Oficial", "Testemunhal"], a: 0,
+    h: "Serve para preparar a pauta e compor o texto, com menos peso de credibilidade.",
+    e: "Fontes secundárias ajudam na pauta e nas premissas genéricas; as informações precisam ser cruzadas." },
+  { t: "Fontes", q: "O presidente do Banco do Brasil falando em nome da instituição é um exemplo de fonte:",
+    o: ["Oficial", "Oficiosa", "Independente", "Anônima"], a: 0,
+    h: "É mantida pelo Estado, instituições ligadas a ele ou empresas e organizações.",
+    e: "Fonte oficial. Mas atenção: Lage alerta que elas podem falsear a realidade para preservar interesses." },
+  { t: "Fontes", q: "Segundo Nilson Lage, por que é preciso cuidado com as fontes oficiais?",
+    o: ["Podem falsear a realidade para preservar interesses, beneficiar grupos ou por disputas de poder", "Porque nunca podem ser citadas pelo nome", "Porque são sempre anônimas", "Porque não têm nenhuma credibilidade"], a: 0,
+    h: "Lembre do slide com a pergunta 'São confiáveis?'.",
+    e: "Fontes oficiais podem omitir ou distorcer fatos por interesses estratégicos, corporativismo, militância ou lutas internas." },
+  { t: "Fontes", q: "Um agente administrativo de um órgão público que passa informações sem estar autorizado a falar pelo órgão é uma fonte:",
+    o: ["Oficiosa", "Oficial", "Documental", "Secundária"], a: 0,
+    h: "Parece 'oficial', mas não está autorizada a falar em nome da entidade.",
+    e: "Fonte oficiosa: ligada à entidade, mas sem autorização. Pode revelar manobras escondidas. Preservar a identidade é importante." },
+  { t: "Fontes", q: "Uma dona de casa parada na rua para falar sobre o aumento do pão é um exemplo de fonte:",
+    o: ["Independente", "Oficial", "Oficiosa", "Documental"], a: 0,
+    h: "Ela não tem relação de poder nem interesse específico no assunto.",
+    e: "Fontes independentes/especialistas são desvinculadas de relação de poder. Ex.: dona de casa, cardiologista, professor." },
+  { t: "Fontes", q: "Segundo o autor, qual testemunho é o mais confiável numa fonte testemunhal?",
+    o: ["O imediato", "O dado uma semana depois", "O mais emocionado", "O de quem estava mais longe"], a: 0,
+    h: "Quanto mais perto do momento do fato, melhor a memória.",
+    e: "O testemunho mais confiável é o imediato. Deve-se ouvir pelo menos três e selecionar o mínimo comum aos relatos." },
+  { t: "Fontes", q: "Ao ouvir testemunhas, o que o jornalista deve fazer com os relatos?",
+    o: ["Ouvir pelo menos três e selecionar o mínimo comum entre eles", "Publicar só o relato mais dramático", "Juntar todos os relatos sem filtrar", "Ouvir apenas uma testemunha"], a: 0,
+    h: "Procure o que é igual em todas as versões.",
+    e: "Ouvir pelo menos três testemunhos e ficar com o mínimo comum, considerando a emoção envolvida." },
+  { t: "Fontes", q: "Sobre as fontes anônimas, é correto afirmar:",
+    o: ["Podem estar em qualquer classificação, mas não podem ser apresentadas ao leitor", "São um tipo separado que só existe em reportagens policiais", "Não têm proteção legal no Brasil", "Devem sempre ter o nome revelado no fim da matéria"], a: 0,
+    h: "O motivo do anonimato é o risco de punição para a fonte.",
+    e: "Fontes anônimas podem ser de qualquer tipo; não são identificadas por risco (morte, violência, perder emprego…) e são protegidas por lei." },
+  { t: "Fontes", q: "Qual artigo da Constituição garante o sigilo da fonte quando necessário ao exercício profissional?",
+    o: ["Art. 5º, inciso XIV", "Art. 1º, inciso I", "Art. 71", "Art. 220, inciso II"], a: 0,
+    h: "É o mesmo artigo dos direitos fundamentais, e o inciso é em algarismo romano (14).",
+    e: "Art. 5º, XIV: 'é assegurado a todos o acesso à informação e resguardado o sigilo da fonte'." },
+  { t: "Fontes", q: "Pelo Código de Ética dos Jornalistas, resguardar o sigilo da fonte é:",
+    o: ["Um direito do jornalista (Art. 5º)", "Proibido", "Opcional só para editores", "Um dever apenas em matérias policiais"], a: 0,
+    h: "O Art. 5º do Código fala de direito; o Art. 6º fala de dever.",
+    e: "Art. 5º: é direito do jornalista resguardar o sigilo da fonte. Art. 6º, VI: é dever não colocar em risco a integridade das fontes." },
+  { t: "Fontes", q: "Relatórios governamentais, processos judiciais, artigos científicos, vídeos e fotos são fontes:",
+    o: ["Documentais", "Testemunhais", "Oficiosas", "Independentes"], a: 0,
+    h: "São pesquisas, registros e materiais, não pessoas.",
+    e: "Fontes documentais: pesquisas, documentos, registros ou materiais com informações relevantes." },
+  { t: "Fontes", q: "Como a fonte deve ser apresentada no texto?",
+    o: ["Com a qualificação (cargo) antes do nome. Ex.: O sociólogo Antônio Alves, 62 anos…", "Só com o primeiro nome", "Só com o cargo, sem o nome", "Com o nome no fim da matéria, entre parênteses"], a: 0,
+    h: "O exemplo da aula começa com a profissão.",
+    e: "A qualificação (cargo) vem antes do nome: 'O sociólogo Antônio Alves, 62 anos, explicou…'." },
+  { t: "Fontes", q: "O que acontece quando o jornal diário repete sempre as mesmas fontes?",
+    o: ["O texto fica chato e previsível, o leitor se afasta e o jornal perde credibilidade", "O jornal ganha mais leitores fiéis", "A apuração fica mais confiável", "Nada muda"], a: 0,
+    h: "Pense no 'jornal pasteurizado' e no repórter com fama de preguiçoso.",
+    e: "Repetir fontes deixa o texto repetitivo, o jornal pasteurizado e previsível, espanta o leitor e tira credibilidade." },
+  { t: "Fontes", q: "Qual destes é um ponto de ATENÇÃO (risco) no uso de fontes?",
+    o: ["Depender demais de fontes oficiais, como assessorias, que filtram a informação", "Ter pluralidade de perspectivas", "Contextualizar a notícia com especialistas", "Revelar fatos ocultos com fontes oficiosas"], a: 0,
+    h: "Três das opções são pontos positivos. Qual é o problema?",
+    e: "Dependência e manipulação: assessorias fornecem informação 'filtrada' para favorecer a instituição." },
+
+  // ---- Entrevista ----
+  { t: "Entrevista", q: "Durante a entrevista, se a resposta for apenas 'sim' ou 'não', o repórter deve:",
+    o: ["Perguntar 'por quê?'", "Passar para a próxima pergunta", "Dar a sua opinião", "Encerrar a entrevista"], a: 0,
+    h: "É a pergunta que toda criança faz.",
+    e: "Sempre pergunte 'por quê' quando a resposta for sim ou não." },
+  { t: "Entrevista", q: "Em entrevistas longas (estilo pingue-pongue), a recomendação é:",
+    o: ["Fazer pausas a cada 40 minutos", "Nunca fazer pausas", "Fazer pausas a cada 5 minutos", "Dividir em dez dias"], a: 0,
+    h: "Um pouco menos de uma hora.",
+    e: "Pausas a cada 40 minutos para aliviar o cansaço." },
+  { t: "Entrevista", q: "Se o entrevistado der uma resposta 'bomba', o repórter deve:",
+    o: ["Não se mostrar super entusiasmado", "Comemorar na frente dele", "Interromper e ligar para a redação", "Discordar para gerar polêmica"], a: 0,
+    h: "Mantenha a postura profissional.",
+    e: "Não se mostre super entusiasmado com uma resposta 'bomba'." },
+  { t: "Entrevista", q: "Quem conduz a entrevista?",
+    o: ["O repórter, que é o dono da matéria e faz as perguntas", "O entrevistado", "O assessor de imprensa", "O editor, por telefone"], a: 0,
+    h: "Quem faz as perguntas?",
+    e: "O repórter conduz a entrevista: é o dono da matéria." },
+  { t: "Entrevista", q: "Entrevistas do factual (dia a dia) devem ser preferencialmente:",
+    o: ["Cara a cara, durando menos de 30 minutos", "Por e-mail, sem limite de tempo", "Por redes sociais", "Pelo telefone, sempre"], a: 0,
+    h: "Presencial e rápida. Telefone só quando não houver horário.",
+    e: "Factual: de preferência cara a cara e com menos de 30 minutos. Cuidado com e-mail e redes sociais." },
+
+  // ---- Gêneros ----
+  { t: "Gêneros", q: "A classificação do gênero de um texto jornalístico é dada a partir de quê?",
+    o: ["Da intencionalidade do jornalista na redação do texto", "Do tamanho do texto", "Da editoria do jornal", "Do número de fotos"], a: 0,
+    h: "O que o jornalista QUER fazer com o texto: informar, opinar, interpretar…",
+    e: "A classificação vem da intencionalidade do jornalista: opinar, informar, entreter ou interpretar." },
+  { t: "Gêneros", q: "O gênero informativo é caracterizado por:",
+    o: ["Relatar fatos de forma objetiva, direta e com isenção, sem opinião", "Trazer a opinião do autor", "Aprofundar causas e consequências", "Usar 1ª pessoa para aproximar o leitor"], a: 0,
+    h: "'A notícia nua e crua.'",
+    e: "Informativo: fatos com objetividade e isenção, linguagem clara e formal, sem opinião." },
+  { t: "Gêneros", q: "No gênero informativo, o texto deve estar em qual pessoa?",
+    o: ["3ª pessoa do singular", "1ª pessoa do singular", "1ª pessoa do plural", "2ª pessoa"], a: 0,
+    h: "O repórter nunca se coloca no texto.",
+    e: "3ª pessoa do singular: o repórter não se coloca no texto, buscando a isenção." },
+  { t: "Gêneros", q: "Qual é um ponto NEGATIVO do gênero informativo no factual?",
+    o: ["Superficialidade: não aprofunda contexto nem causas, e a validade é curta", "Falta de agilidade", "Excesso de opinião", "Perda de credibilidade"], a: 0,
+    h: "Ele fica 'apenas no momento/hoje'.",
+    e: "Superficialidade e falta de análise: fica no hoje, com validade curta." },
+  { t: "Gêneros", q: "O texto do Projeto Integrador para a Revista Tendências mistura quais gêneros?",
+    o: ["Informativo e interpretativo", "Opinativo e entretenimento", "Apenas o opinativo", "Apenas o informativo"], a: 0,
+    h: "Um é usado no factual; o outro, nas reportagens.",
+    e: "Mistura o informativo (factual, especiais, pautas frias) com o interpretativo (reportagens)." },
+
+  // ---- Intertítulo e olho ----
+  { t: "Intertítulo e Olho", q: "O que é o intertítulo?",
+    o: ["Uma ou duas palavras no interior do texto para arejar a leitura e mudar de assunto", "O título principal da matéria", "A legenda da foto", "Um resumo no fim da matéria"], a: 0,
+    h: "'Inter' = entre. Ele fica no meio do texto.",
+    e: "Intertítulo: uma ou duas palavras dentro do texto que facilitam a leitura e marcam mudança de assunto." },
+  { t: "Intertítulo e Olho", q: "O intertítulo está ligado a quê?",
+    o: ["Ao parágrafo que vem logo abaixo dele", "Ao título da matéria", "À foto da página", "Ao nome do repórter"], a: 0,
+    h: "Ele não tem ligação com o título da matéria.",
+    e: "O intertítulo se liga ao parágrafo abaixo dele, não ao título." },
+  { t: "Intertítulo e Olho", q: "Onde o intertítulo normalmente entra no texto?",
+    o: ["Abaixo do 4º ou 5º parágrafo, em matérias de cerca de 30–35 linhas ou mais", "Antes do primeiro parágrafo", "Só no último parágrafo", "Em todo parágrafo"], a: 0,
+    h: "Em textos longos, depois de alguns parágrafos.",
+    e: "Usado em matérias de 30–35 linhas ou mais, abaixo do 4º ou 5º parágrafo." },
+  { t: "Intertítulo e Olho", q: "O que é o 'olho' na edição?",
+    o: ["Um destaque com os melhores trechos do texto, em letra maior, para chamar a atenção", "A foto principal da página", "O primeiro parágrafo (lead)", "A assinatura do fotógrafo"], a: 0,
+    h: "É o que 'pisca' para o leitor no meio da página.",
+    e: "Olho: anuncia os melhores trechos de textos longos, areja a leitura e tem letra maior que o texto." },
+  { t: "Intertítulo e Olho", q: "Quando o olho traz uma frase-depoimento, ele deve:",
+    o: ["Vir entre aspas e com a identificação da fonte", "Vir sem aspas e sem fonte", "Ser escrito em 1ª pessoa pelo repórter", "Ser inventado pelo editor"], a: 0,
+    h: "Se é fala de alguém, precisa mostrar que é fala e de quem.",
+    e: "Frase-depoimento: entre aspas e com a fonte. Trecho de texto não precisa de aspas (depende do manual da empresa)." },
+
+  // ---- Jornalismo declaratório ----
+  { t: "Declaratório", q: "O que é 'jornalismo declaratório'?",
+    o: ["Substituir a apuração dos fatos pela reprodução de declarações das fontes", "Publicar só dados oficiais", "Fazer reportagem investigativa", "Escrever apenas em discurso indireto"], a: 0,
+    h: "O jornalista deixa de apurar e só 'coleta falas'.",
+    e: "É trocar apurar, checar e julgar por uma coleta de declarações publicadas sem crítica." },
+  { t: "Declaratório", q: "O que quer dizer a frase de Bob Fernandes sobre a 'parede azul'?",
+    o: ["O jornalista não precisa que alguém diga um fato que ele mesmo pode constatar", "O jornalista deve sempre pedir uma declaração", "Paredes azuis são notícia", "Toda informação precisa estar entre aspas"], a: 0,
+    h: "Se você está vendo a parede azul, precisa que alguém te diga?",
+    e: "O repórter não precisa ouvir do entrevistado que a parede é azul para escrever que ela é azul: apure e afirme." },
+  { t: "Declaratório", q: "Qual é a orientação sobre o uso das aspas?",
+    o: ["Interpretar as falas, escrever em discurso indireto e usar aspas só quando necessário", "Colocar toda a entrevista entre aspas", "Nunca usar aspas", "Usar aspas só nos títulos"], a: 0,
+    h: "Excesso de aspas mostra que o repórter não soube interpretar.",
+    e: "Ouvir, interpretar, contextualizar e escrever em discurso indireto; aspas só para dar credibilidade à fala." },
+  { t: "Declaratório", q: "Em vez de escrever 'O Ministério da Saúde diz que…', a aula sugere:",
+    o: ["'De acordo com dados divulgados pelo Ministério da Saúde…'", "'O Ministério da Saúde falou para mim que…'", "'Segundo boatos…'", "Não citar a origem do dado"], a: 0,
+    h: "Ministério não 'diz'; ele divulga dados.",
+    e: "Usar 'de acordo com dados divulgados pelo…' em vez de tratar a instituição como se falasse." },
+
+  // ---- Outros textos ----
+  { t: "Outros textos", q: "O que é uma 'pipoca'?",
+    o: ["Registro simples do fato em cerca de 5 linhas, um lead clássico, sem fontes nem aspas", "Um texto de 15 linhas com uma fonte", "Uma reportagem especial", "Uma coluna de opinião"], a: 0,
+    h: "Pequena e rápida, como uma pipoca estourando.",
+    e: "Pipoca: 5 linhas, lead clássico, sem fonte (pessoas) ou aspas. Serve para não tomar furo." },
+  { t: "Outros textos", q: "A 'curta' tem aproximadamente:",
+    o: ["15 linhas (3 parágrafos), podendo usar uma fonte e aspas", "5 linhas, sem fonte", "1 linha", "60 linhas com várias fontes"], a: 0,
+    h: "Maior que a pipoca, menor que a matéria.",
+    e: "Curta: ~15 linhas em 3 parágrafos; pode ter uma fonte e aspas." },
+  { t: "Outros textos", q: "Qual destes NÃO é um motivo para usar pipoca ou curta?",
+    o: ["Aprofundar a análise das causas do fato", "Não tomar um furo jornalístico", "Registrar fato de última hora", "Quando a apuração ficou capenga"], a: 0,
+    h: "São textos pequenos. Dá para aprofundar alguma coisa neles?",
+    e: "Pipoca e curta registram fatos rápidos, evitam furos e servem para apuração fraca, não para análise profunda." },
+
+  // ---- Legenda e TL ----
+  { t: "Legenda e TL", q: "Sobre a legenda, é correto afirmar:",
+    o: ["Não serve só para descrever a foto: deve esclarecer dúvidas e dar contexto", "Deve apenas repetir o que se vê na foto", "Tem letra maior que o texto", "Ocupa sempre cinco linhas"], a: 0,
+    h: "Ela é um dos primeiros elementos que atraem o leitor.",
+    e: "A boa legenda esclarece dúvidas, destaca o relevante e dá informação extra. Em geral uma linha, letra menor." },
+  { t: "Legenda e TL", q: "Legenda que mostra o que a imagem não contém, como o local de um acidente, tem função:",
+    o: ["Complementar", "Explicativa", "Evocadora", "Opinativa"], a: 0,
+    h: "Ela 'completa' a foto com a parte abstrata.",
+    e: "Complementar: acrescenta a parte abstrata que a imagem não traz (ex.: local do acidente)." },
+  { t: "Legenda e TL", q: "'O motorista não dormia há dois dias e passou a noite numa festa.' Essa legenda tem função:",
+    o: ["Evocadora", "Complementar", "Explicativa", "Descritiva"], a: 0,
+    h: "Ela abre reflexões, faz o leitor pensar além da foto.",
+    e: "Evocadora: abre outras perspectivas e reflexões." },
+  { t: "Legenda e TL", q: "Legenda que mostra algo que o leitor não identificaria sozinho, como a velocidade do carro pelo amassado, tem função:",
+    o: ["Explicativa", "Evocadora", "Complementar", "Opinativa"], a: 0,
+    h: "Ela 'explica' elementos que o leitor não conseguiria identificar.",
+    e: "Explicativa: revela elementos concretos e abstratos que o leitor não poderia identificar." },
+  { t: "Legenda e TL", q: "O que é o texto-legenda (TL)?",
+    o: ["Um texto de 4 ou 5 linhas que acompanha uma foto importante, como um lead", "Uma legenda de uma palavra", "Uma reportagem de várias páginas", "O nome do fotógrafo"], a: 0,
+    h: "Funciona como uma pipoca, mas sempre junto de uma foto.",
+    e: "TL: 4 ou 5 linhas, como um lead, sempre acompanhando uma foto." },
+  { t: "Legenda e TL", q: "Por que o editor pede um TL ao repórter?",
+    o: ["Para publicar uma foto importante quando não há matéria para acompanhá-la", "Para substituir o título da capa", "Para aumentar o espaço usado na página", "Para dar a opinião do jornal"], a: 0,
+    h: "Ele também serve para REDUZIR o espaço na página e justificar a foto.",
+    e: "O TL justifica a foto na página, evita furo, economiza espaço e garante a informação ao leitor." },
+];
+
+const $ = id => document.getElementById(id);
+let order, i, score, hints, answered;
+
+function shuffle(arr) {
+  const a = arr.slice();
+  for (let k = a.length - 1; k > 0; k--) { const j = Math.floor(Math.random() * (k + 1)); [a[k], a[j]] = [a[j], a[k]]; }
+  return a;
+}
+
+function start() {
+  order = shuffle(Q); i = 0; score = 0; hints = 0;
+  $("result").classList.add("hidden"); $("quiz").classList.remove("hidden");
+  show();
+}
+
+function show() {
+  const item = order[i];
+  answered = false;
+  $("count").textContent = `Pergunta ${i + 1} de ${order.length}`;
+  $("topic").textContent = item.t;
+  $("progress").style.width = `${(i / order.length) * 100}%`;
+  $("question").textContent = item.q;
+  $("hint").classList.add("hidden"); $("hint").textContent = "💡 " + item.h;
+  $("exp").className = "exp hidden";
+  $("hintBtn").disabled = false;
+  $("nextBtn").classList.add("hidden");
+  const box = $("options"); box.innerHTML = "";
+  shuffle(item.o.map((text, idx) => ({ text, ok: idx === item.a }))).forEach(op => {
+    const b = document.createElement("button");
+    b.className = "opt"; b.textContent = op.text; b.dataset.ok = op.ok;
+    b.onclick = () => pick(b);
+    box.appendChild(b);
+  });
+}
+
+function pick(btn) {
+  if (answered) return;
+  answered = true;
+  const right = btn.dataset.ok === "true";
+  if (right) score++;
+  document.querySelectorAll(".opt").forEach(b => {
+    b.disabled = true;
+    if (b.dataset.ok === "true") b.classList.add("ok");
+  });
+  if (!right) btn.classList.add("bad");
+  const exp = $("exp");
+  exp.className = "exp " + (right ? "ok" : "bad");
+  exp.textContent = (right ? "✅ Acertou! " : "❌ Quase! ") + order[i].e;
+  $("hintBtn").disabled = true;
+  $("nextBtn").textContent = i + 1 < order.length ? "Próxima →" : "Ver resultado";
+  $("nextBtn").classList.remove("hidden");
+  $("nextBtn").focus();
+}
+
+$("hintBtn").onclick = () => {
+  if ($("hint").classList.contains("hidden")) { hints++; $("hint").classList.remove("hidden"); }
+};
+$("nextBtn").onclick = () => { i++; i < order.length ? show() : finish(); };
+$("restart").onclick = start;
+
+function finish() {
+  $("quiz").classList.add("hidden"); $("result").classList.remove("hidden");
+  const pct = Math.round((score / order.length) * 100);
+  $("score").textContent = `${score}/${order.length}`;
+  $("msg").textContent = pct >= 90 ? "Arrasou! Pode dar aula disso 🏆" :
+                         pct >= 70 ? "Muito bem! Está pronta para a prova 💪" :
+                         pct >= 50 ? "Bom caminho! Revisa os erros e tenta de novo 📚" :
+                                     "Bora revisar o material e jogar de novo 💜";
+  $("hintsUsed").textContent = `Dicas usadas: ${hints}`;
+}
+
+// autoverificação: toda pergunta tem dica, explicação e resposta válida
+Q.forEach((x, n) => console.assert(x.h && x.e && x.o[x.a], "pergunta inválida", n));
+start();
+</script>
+</body>
+</html>
