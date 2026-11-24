@@ -96,10 +96,11 @@
   .weak a { color: var(--plum); font-weight: 600; }
 
   /* revisão */
-  .chips { position: sticky; top: 0; z-index: 2; display: flex; gap: 8px; overflow-x: auto; padding: 10px 0; background: var(--bg); scrollbar-width: none; }
+  .chips { position: sticky; top: 0; z-index: 2; display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; padding: 10px 0; background: var(--bg); }
+  @media (max-width: 600px) { .chips { position: static; } }
   .chip { flex: none; font: 600 .8rem Inter, sans-serif; color: var(--plum); background: var(--paper); border: 1px solid var(--line); border-radius: 999px; padding: 6px 12px; text-decoration: none; }
   .chip:hover { border-color: var(--plum); }
-  .sec { margin-top: 18px; scroll-margin-top: 60px; }
+  .sec { margin-top: 18px; scroll-margin-top: 110px; }
   .sec h2 { font-size: 1.6rem; margin: 0 0 4px; }
   .sec .lede { color: var(--muted); margin: 0 0 16px; }
   .sec h3 { font-size: 1.1rem; margin: 22px 0 8px; color: var(--plum); }
